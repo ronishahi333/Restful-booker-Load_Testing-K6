@@ -30,7 +30,6 @@ choco install k6
 ### Linux
 
 ```bash
-sudo gpg -k
 sudo apt-get update
 sudo apt-get install k6
 ```
