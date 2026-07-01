@@ -1,6 +1,7 @@
 import { get, post, put, del } from "../helpers/helper.js"
 import { config } from "../config/options.js"
 import { check } from "k6"
+import { bookingCreation, createBookingCount } from "../metrics/custom.js"
 
 export function bookingFlow(token) {
 
@@ -31,6 +32,7 @@ export function bookingFlow(token) {
         null,
         { flow: 'createBooking' }
     )
+    bookingCreation.add(createBooking.timings.duration);
 
     const responseBody = createBooking.json();
     const bookingID = responseBody.bookingid
@@ -39,6 +41,10 @@ export function bookingFlow(token) {
         'created booking status': (r) => r.status == 200,
         'created booking': (r) => r.json('bookingid') !== undefined
     })
+
+    if (createBooking.status == 200) {
+        createBookingCount.add(1)
+    }
 
     const updateBooking = put(
         `${config}/booking/${bookingID}`,
@@ -59,7 +65,7 @@ export function bookingFlow(token) {
 
     check(updateBooking,{
         'updated booking status': (r) => r.status == 200,
-        'updated booking': (r)=> r.json('firstname') !== undefined 
+        'updated booking': (r)=> r.json('firstname') !== undefined, 
     })
 
     const delBooking = del(
